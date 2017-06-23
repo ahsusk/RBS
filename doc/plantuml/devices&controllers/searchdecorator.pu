@@ -1,0 +1,37 @@
+abstract ASearchDecorator{
++ ASearchDecorator(_view : QWidget*)
++ find(_expression:const QString&,_rx:bool,_ww:bool,_cs:bool,_fw:bool,_left:bool) : bool
++ replace(_expr: const QString&, _rplc: const QString&,_rx:bool,_ww:bool,_cs:bool) : bool
++ replaceAndFind(_expr:const QString&,_rplc:const QString&,_rx:bool,_ww:bool,_cs:bool) : bool
++ replaceAll(_expr: const QString&,_rplc:const QString&, _rx:bool, _ww:bool,_cs:bool) : bool
+# {abstract} _select(_from:int, _cnt:int)
+# {abstract} _set_settings(_expr:const QString&, _rx: bool, _ww: bool, _cs: bool)
+
+# {abstract} _check_selection() : bool
+# {abstract} _replace(_rplc: const QString&)
+# {abstract} _run_search(bool _forward, bool _left) : SearchResult
+
+}
+
+abstract RegExpSearchDecorator {
+# _set_settings(_expr: const QString&, _rx: bool, _ww: bool, _cs: bool)
+# _check_selection() : bool
+# _run_search(_forward : bool, _left : bool) : SearchResult
+
+# {abstract} _get_text() : QString
+# {abstract} _get_selected_text() : QString
+# {abstract} _get_current_position(_forward : bool, _left : bool) : int
+
+- search(_text: const QString &, _offset: int, _forward: bool) : int
+}
+
+class ScintillaSearchDecorator {
+    # _select(_from: int, _cnt: int)
+    # _replace(_rplc: const QString&)
+    # _get_text() : QString
+    # _get_selected_text() : QString
+    # _get_current_position(_fw: bool, _left: bool)
+}
+ScintillaSearchDecorator -up-|> RegExpSearchDecorator
+RegExpSearchDecorator -up-|> ASearchDecorator
+ASearchDecorator -up-|> AWidgetDecorator
