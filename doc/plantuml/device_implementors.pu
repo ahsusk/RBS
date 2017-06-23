@@ -1,0 +1,61 @@
+abstract ADeviceImplementor {
+    - file_ : RBSFile*
+
+    + {abstract} open(mode: QIODevice::OpenMode) : bool
+    + {abstract} read(_data: char*, _maxlen: qint64) : qint64
+    + {abstract} write(_data: const char*, _len, qint64) : qint64
+    + {abstract} close() : void
+    + {abstract} save() : bool
+    + {abstract} load() : bool
+    + {abstract} needAskForSaving() : bool
+    + {abstract} isWriteOnlyDevice() : bool
+
+    + getUrl() : QUrl
+    + getFileName() : QString
+    + getDirectory() : QDir
+    + getAbsoluteDir() : QString
+    + getFileInfo() : QFileInfo
+    + getAbsolutePath() : QString
+
+    + ADeviceImplementor(_absolute_path: const QString&)
+    + <<destroy>> ADeviceImplementor()
+    + readAll() : QByteArray
+    + write(_data: const QByteArray&) : bool
+
+    + <<signal>> rbsOpenFile();
+    + <<signal>> rbsWriteToFile();
+    + <<signal>> rbsCloseFile();
+    + <<signal>> needActualData();
+
+    # _get_real_file() : QFile&
+    # _check_or_open(_mode: QIODevice::OpenMode) : bool
+}
+
+class BufferedDeviceImplementor {
+    - buffer_ : QBuffer
+    + {final} open(mode: QIODevice::OpenMode) : bool
+    + {final} read(_data: char*, _maxlen: qint64) : qint64
+    + {final} write(_data: const char*, _len: qint64) : qint64
+    + {final} close() : void
+    + {final} save() : bool
+    + {final} load() : bool
+}
+
+class DirectlyDeviceImplementor {
+    + {override} open(mode: QIODevice::OpenMode) : bool
+    + {override} read(_data: char*, _maxlen: qint64) : qint64
+    + {override} write(_data: const char*, _len: qint64) : qint64
+    + {override} close() : void
+    + {override} save() : bool
+    + {override} load() : bool
+}
+
+class TemporaryDeviceImplementor {
+    + {final} needAskForSaving() : bool
+    + {final} isWriteOnlyDevice() : bool
+    + {final} close() : void
+}
+
+BufferedDeviceImplementor -up-|> ADeviceImplementor
+DirectlyDeviceImplementor -up-|> ADeviceImplementor
+TemporaryDeviceImplementor -up-|> DirectlyDeviceImplementor

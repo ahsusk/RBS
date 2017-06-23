@@ -1,0 +1,45 @@
+class Device {
+    - impl_ : ADeviceImplementor*
+    - modified_ : bool
+    - state_ : State
+    - always_save_ : bool
+
+    + {override} open(_open_mode: OpenMode) : bool
+    + {override} close() : void
+    # {override} readData(data: char*, maxlen: qint64) : qint64
+    # {override} writeData(data: const char*, len: qint64) : qint64
+
+    # Device(_impl: ADeviceImplementor*)
+    # _get_state() : State
+
+    + getUrl() : QUrl
+    + getFileName() : QString
+    + getDirectory() : QDir
+    + getAbsoluteDir() : QString
+    + getFileInfo() : QFileInfo
+    + getAbsolutePath() : QString
+    + isModified() : bool
+
+    + save() : bool
+    + load() : bool
+    + modify() : void
+    + getData() : QByteArray
+
+    + needAskForSaving() : bool
+    + setAlwaysSave(_as: bool) : void
+    + fileIsOpen(_mode: OpenMode) : bool
+
+    - set_modified(_modified: bool)
+
+    + <<signal>> modificationChanged(_modified: bool)
+    + <<signal>> rbsOpenFile()
+    + <<signal>> rbsWriteToFile()
+    + <<signal>> rbsCloseFile()
+    + <<signal>> dataChanged()
+    + <<signal>> aboutToBeSaved();
+    + <<signal>> aboutToBeLoaded();
+    + <<signal>> saved();
+    + <<signal>> loaded();
+    + <<signal>> needActualData();
+
+}

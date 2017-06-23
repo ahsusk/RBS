@@ -1,0 +1,51 @@
+actor Actor
+Actor -> FileMenu : Пользователь открывает\n файл через меню
+activate FileMenu
+FileMenu -> DocumentOpener : openDocument(_path)
+activate DocumentOpener
+loop Поиск информации о том, в каком редакторе открыть файл
+    DocumentOpener -> AEditorMeta : getPriorityForUrl(_url)
+end
+DocumentOpener -> AEditorMeta : getClassName()
+activate AEditorMeta
+return classname
+DocumentOpener o-> TDIManager : showView(_url,classname)
+activate TDIManager
+TDIManager -> DeviceMap : getCastedDevice(_url)
+TDIManager -> DevicePresenter : getDecorators<TDITabDecorator*>(doc)
+activate DevicePresenter
+return list
+alt список декораторов не пустой
+loop ищем декоратор с представлением класса classname
+TDIManager -> TDITabDecorator : getView
+activate TDITabDecorator
+return view
+TDIManager -> QWidget : metaObject()->className()
+end
+end
+alt представление было найдено
+TDIManager -> TDILayoutLogic : activate(view)
+else
+TDIManager -> TDIManager : openView(doc,classname)
+activate TDIManager
+TDIManager -> PresenterFactory : initPresenter(doc,classname)
+activate PresenterFactory
+
+PresenterFactory -> MetaObjectFactory : create(classname)
+activate MetaObjectFactory
+return view
+
+PresenterFactory -> DevicePresenterFactory : initPresenter
+activate DevicePresenterFactory
+return presenter
+
+loop по всем фабрикам декораторов
+PresenterFactory -> ADecoratorFactory : create(presenter)
+end
+end
+
+return presenter
+return
+return
+return
+return

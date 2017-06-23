@@ -1,0 +1,35 @@
+abstract ATextDecorator {
+    + ATextDecorator(_view :QWidget*)
+    + <<signal>> cursorPositionChanged(_line: int, _index: int)
+    + {abstract} getSelectedText() : QString
+    + {abstract} replaceSelectedText(const QString& _text)
+    + {abstract} getSelection() : QList<int>
+    + {abstract} setSelection(_selection : const QList<int> &)
+    + {abstract} getCursorPosition() : QPoint
+    + {abstract} setCursorPosition(_line: int, _index: int)
+    + {abstract} getLine(int _line) : QString
+    + {abstract} cut()
+    + {abstract} copy()
+    + {abstract} paste()
+    + {abstract} undo()
+    + {abstract} redo()
+    + {abstract} ensureLineVisible(int _line)
+}
+
+class SciTextDecorator {
+    + getSelectedText() : QString
+    + replaceSelectedText(const QString& _text)
+    + getSelection() : QList<int>
+    + setSelection(_selection : const QList<int> &)
+    + getCursorPosition() : QPoint
+    + setCursorPosition(_line: int, _index: int)
+    + getLine(int _line) : QString
+    + cut()
+    + copy()
+    + paste()
+    + undo()
+    + redo()
+    + ensureLineVisible(int _line)
+}
+ATextDecorator -up-|> AWidgetDecorator
+SciTextDecorator -up-|> ATextDecorator

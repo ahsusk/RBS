@@ -1,0 +1,51 @@
+
+class DeviceMap <<Singleton>> {
+    + getDevice(_path: const QString&) Device*
+    + getDevices() : QList<Device*>
+    + remove(_device: Device*)
+    + remove(_path: const QString&)
+    + contains(_path: const QString&) : bool
+    + getCastedDevice<T>(_path: const QString&) : T
+
+    + <<signal>> deviceMapped(_device: Device*)
+    + <<signal>> removeDevice(_device: Device*)
+    + <<signal>> deviceRemoved(_path: const QString&)
+
+    - _push_me(_device: Device*)
+
+}
+
+class DeviceFactory <<Singleton>> {
+    - current_dir_name_ : QString
+    - default_log_dir_ : QDir
+    - factories_ : QList<DeviceWrapperFactory*>
+    + createBufferedDevice(_path: const QString&, _insert_time: bool,\
+    _place_to_tmp: bool,_place_to_log: bool,_create_if_not_exists: bool) : Device*
+    + createDeviceForTemporaryFile(_path: const QString&, _insert_time: bool,\
+    _place_to_log: bool) : Device*
+    + getDefaultLogDir() : QDir
+    + getCurrentLogDir() : QDir
+    + registerWrapperFactory(_factory: DeviceWrapperFactory*)
+    + removeOldLogs()
+    + <<signal>> cannotOpenForWrite(_device: Device*, _try_again: void*)
+
+    - wrap_implementor(_impl: ADeviceImplementor*) : Device
+    - get_file_path(_filepath: const QString&, _insert_time: bool,\
+    _place_to_tmp: bool, _place_to_log: bool) : QString
+
+}
+
+interface DeviceWrapperFactory {
+    + {abstract} canWrap(_device: ADeviceImplementor*) : bool
+    + {abstract} wrap(_device: ADeviceImplementor*) : Device*
+}
+
+abstract RegExpDeviceFactory {
+    + RegExpDeviceFactory(_filter: const QString&, \
+    _sensitivity: Qt::CaseSensitivity, _syntax: QRegExp::PatternSyntax)
+    + {abstract} canWrap(_device: ADeviceImplementor*) : bool
+}
+RegExpDeviceFactory .up.|> DeviceWrapperFactory
+DeviceFactory "1" o-down-> "*" DeviceWrapperFactory
+DeviceMap "1" *-right-> "*" Device : QMap<QString,Device*> map_
+DeviceMap -- DeviceFactory
