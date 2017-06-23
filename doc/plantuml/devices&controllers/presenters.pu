@@ -1,0 +1,15 @@
+class Presenter {
+    - view_ : QWidget*
+
+    + {abstract} init()
+    + getWidget()
+    + <<signal>> closeRequested(_result: void*)
+    # <<slot>> {abstract} _activated()
+    # <<slot>> {abstract} _deactivated()
+
+    - widget_activated(_widget: QWidget*)
+    - widget_deactivated(_widget: QWidget*)
+}
+
+Presenter "1" -left- "1" QWidget
+

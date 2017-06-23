@@ -1,0 +1,206 @@
+/**
+\page devices Работа с файлами
+
+\section device_as_object Устройства в RBS
+
+Для каждого файла, открытого в RBS, создается объект устройства.
+
+Файлы, открываемые в RBS:
+- файлы настроек;
+- файлы логов, созданные в RBS;
+- файлы, открываемые пользователем;
+- файлы, создаваемые программой ctags (см. \ref editors_autocompletion).
+
+В RBS существует несколько видов устройств:
+- устройства с буфером (данные читаются и записываются в файл только при
+  создании объекта, и при ручном сохранении данных);
+- устройства, напрямую работающие с файлом на диске (при изменении данных
+  устройства, данные сразу попадают на диск), такие устройства используются
+  для временных файлов.
+
+\attention Максимальный размер открываемого в RBS файла - 20 мб.
+
+\if Developers
+\startuml{devices.png}
+!include device.pu
+!include device_implementors.pu
+
+class RBSFile -up-|> QFile
+note right of RBSFile
+Этот класс никак не меняет поведение QFile,
+просто генерит сигналы
+rbsOpenFile(OpenMode _flags),
+rbsWriteToFile() и
+rbsCLoseFile()
+end note
+
+Device "1" *-right-> "1" ADeviceImplementor : impl_
+ADeviceImplementor -up-|> QObject
+ADeviceImplementor "1" *-right-> "1" RBSFile : file_
+Device -up-|> QIODevice
+
+\enduml
+
+\sa Device, ADeviceImplementor,
+    BufferedDeviceImplementor, TemporaryDeviceImplementor
+\endif
+
+\section documents Документы в RBS
+
+Документ - это устройство, у которого есть кодировка.
+Данные документа можно получить и установить в виде строки QString.
+
+При получении данные конвертируются в установленную кодировку из массива
+данных устройства.
+
+При установке данных строка конвертируется в массив данных с помощью
+установленной кодировки.
+
+Изменение кодировки не влечет за собой модификацию документа, так как
+"сырые" данные при этом остаются те же, просто меняется их отображение.
+
+Конвертирование в другую кодировку влечет за собой модификацию документа, но
+строковые данные, отображаемые в редакторе, не изменятся.
+
+Пока в RBS все устройства являются документами.
+
+\if Developers
+\startuml{documents.png} Документ
+class RBSDocument {
+    - encoding_ : QString
+    + RBSDocument(_impl: ADeviceImplementor*, _encoding: const QString&)
+    + getText() : QString
+    + setText(_text: const QString&)
+    + getEncoding() : QString
+    + setEncoding(_encoding: const QString&)
+
+    + <<signal>> encodingChanged(_encoding: const QString&)
+
+}
+class RBSDocument -up-|> Device
+\enduml
+\endif
+
+\if Developers
+\section devicemap Хранение устройств в RBS
+
+\startuml{devicemap.png} Карта устройств
+!include device_factories.pu
+!include encodingmanager.pu
+\enduml
+
+\startuml{device_creation.png} Создание документа
+actor Actor
+Actor -> DeviceMap : getCastedDevice<RBSDocument*>(_path)
+activate DeviceMap
+    DeviceMap -> DeviceMap : getDevice(_path)
+    DeviceMap -> DeviceMap : contains(_path)
+    alt contains(_path)
+        Actor <- DeviceMap : Device
+    else
+        DeviceMap -> DeviceFactory : createBufferedDevice(_path)
+        activate DeviceFactory
+            alt Файл найден на диске
+                DeviceFactory -> BufferedDeviceImplementor : create
+                activate BufferedDeviceImplementor
+                return impl
+                DeviceFactory -> DeviceFactory : wrap_implementor(impl)
+                activate DeviceFactory
+                    DeviceFactory -> EncodingManager : wrap(impl)
+                    activate EncodingManager
+                        EncodingManager -> RBSDocument : create
+                        activate RBSDocument
+                        RBSDocument -> Device : create
+                            activate Device
+                                Device -> DeviceMap : __push_me
+                                activate DeviceMap
+                                    DeviceMap -> DeviceMap : запись устройства в карту
+                                return
+                            return
+                        return
+                    return RBSDocument
+                return RBSDocument
+            else
+                DeviceFactory -> qDebug : Сообщение об ошибке
+            end
+        return result
+    end
+return qobject_cast<RBSDocument*>(result)
+\enduml
+
+\sa RBSDocument, JsonSettings, DeviceWrapperFactory, RegExpDeviceFactory,
+    EncodingManager
+\endif
+
+\subsection doc_enc_choosing Выбор кодировки для документа
+
+Кодировка, с которой будет открыт документ, вычисляется следующим образом.
+
+-# При открытии документа проверяется список файлов с кодировками, сохраненный
+   в RBS. Сразу после запуска он совпадает с файлом \c recent/encodings.json
+-# Если открываемый файл есть в списке, он будет открыт с сохраненной кодировкой
+-# Если нет – с кодировкой по умолчанию
+-# Кодировки файлов логов не сохраняются, чтобы не перегружать файл \c encodings.json.
+   Все логи сохраняются в кодировке по умолчанию
+-# Информация из файла не удаляется. Файл растет, пока не будет удален вручную.
+
+\if Developers
+
+\startuml{choosing_enc.png} Выбор кодировки
+participant DeviceFactory as DF
+participant Settings
+participant EncodingManager as EM
+participant ADeviceImplementor as ADI
+Settings -> EM : load
+note right : Загрузка списка файлов и кодировок из файла encodings.json
+DF -> EM : wrap(impl)
+activate EM
+EM -> ADI : getAbsolutePath()
+activate ADI
+return path
+EM -> EM : getEncodingForPath()
+activate EM
+alt кодировка сохранена
+EM <-- EM : сохраненное значение
+else
+EM <-- EM : значение по умолчанию
+end
+deactivate EM
+alt путь к файлу НЕ содержит папку $(TMP)
+EM -> EM : кодировка сохраняется в список
+end
+EM -> RBSDocument : new RBSDocument(impl, encoding)
+return doc
+\enduml
+
+\endif
+
+\section external_file_actions Внешние действия с файлами
+
+За всеми файлами, для которых создано устройство RBS, происходит слежение.
+Если какой-то файл изменен или удален, RBS будет реагировать следующим образом.
+
+\subsection external_file_changing Внешнее изменение файла
+
+-# Отключается отслеживание файла
+-# Отображается сообщение загрузить файл или нет.
+-# Да – загрузит данные, модификация снята.
+-# Нет – выставлен флаг модификации. Данные на диск сразу не записываются.
+-# В любом случае отслеживание файла включается.
+
+\attention Пользователь изменил файл вне RBS. Показано сообщение, файл не
+отслеживается. В это время файл можно удалить и RBS не будет реагировать. \n
+После этого при нажатии "Да" файл не сможет загрузиться, т.к. его нет на диске,
+вылетит сообщение об ошибке "Файл пропал". Если файл был открыт в редакторе, то
+редактор просто закроется. Если это файл из дерева проектов, то элемент дерева
+будет удален. Если это рабочее пространство, RBS упадет.
+
+\subsection external_file_deleting Внешнее удаление файла
+-# Отключается отслеживание файла
+-# Вылетит сообщение закрыть файл или нет.
+-# Да – удалятся все представления документа в RBS: редакторы, файловые
+   элементы дерева проектов и т.д. Если это воркспейс – случится страшное.
+-# Нет – выставлен флаг модификации. Данные на диск сразу не записываются.
+   Но создается пустой файл. Начинается отслеживание
+
+*/

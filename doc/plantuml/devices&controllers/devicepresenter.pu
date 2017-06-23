@@ -1,0 +1,51 @@
+!include devices&controllers/awidgetdecorator.pu
+
+class DevicePresenter {
+    - force_write_ : bool
+    - decorators_ : QList<AWidgetDecorator*>
+    - {static} all_device_presenters_ : QList<DevicePresenter*>
+
+    + DevicePresenter(_device: Device*, _view: QWidget*, _auto_read: bool)
+    + registerDecorator(_decorator: AWidgetDecorator*)
+    + getCastedView<T>() : T
+    + getCastedDevice<T> : T
+    + hasDecorator<T> : bool
+    + getDecorator<T> : T
+    + update()
+    + setForceWrite(_fw: bool)
+
+    + <<signal>> activated()
+    + <<signal>> deactivated()
+    + <<signal>> detached(_device: Device*)
+    + <<signal>> attached(_device: Device*)
+
+    # {override} _detach(_old: Device*)
+    # {override} _device_attached(_device: Device*)
+    # {override} _need_force_read() : bool
+    # {override} _need_force_write() : bool
+
+    # <<slot>> _modified_by_view()
+    # <<slot>> _activated()
+    # <<slot>> _deactivated()
+}
+
+
+
+class SpecificPresenter <DocT, ViewT> {
+    + SpecificPresenter(_doc: DocT*, _view: ViewT*, _auto_read: bool)
+    + getView() : ViewT*
+    + getDocument() : DocT*
+}
+
+class DocumentPresenter<ViewT> {
+    + DocumentPresenter(_doc: RBSDocument*, _view: ViewT*, _auto_read: bool)
+    # {final} _do_write()
+    # {final} _do_read()
+    # {override} _device_attached(_device: Device*)
+}
+
+DevicePresenter "1" *-> "*" AWidgetDecorator : decorators_
+DevicePresenter -up-|> DeviceController
+DevicePresenter -up-|> Presenter
+SpecificPresenter -up-|> DevicePresenter
+DocumentPresenter -up-|> SpecificPresenter : <<bind>> <DocT -> RBSDocument>

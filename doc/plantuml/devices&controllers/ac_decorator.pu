@@ -1,0 +1,25 @@
+class SciAutoCompleteDecorator {
+    - tags_: QList<Tag>
+    - apis_: QsciAPIs*
+    - abs_path_: QString
+    - mngr_ : AutoCompletionManager*
+
+    + <<signal>> requestParsing()
+    + complete()
+    + goToWord()
+    + goToDeclDef()
+    + setTags(_tags: const QList<Tag>&)
+    # {override} _set_device_info(_device: Device*)
+    - <<slot>> tool_tip_requested(_global_pos: const QPoint&, _text: QString&)
+    - <<slot>> lexer_changed(_lexer: QsciLexer*)
+    - <<slot>> cursor_position_changed(_line: int, int)
+    - filter_tags();
+    - create_scope() : TextScope*
+    - go_to_tag(_t: const Tag&)
+    - pos_from_tag(const Tag& _t) : int
+    - find_local_tags()
+    - scan_c_files_for(_word: const QString&) : QList<Tag>
+}
+
+SciAutoCompleteDecorator -up-|> AWidgetDecorator
+

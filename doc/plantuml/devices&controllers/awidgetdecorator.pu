@@ -1,0 +1,18 @@
+class AWidgetDecorator {
+    - view_ : QWidget*
+    - device_ : Device*
+
+    + onWidgetGotFocus(_device: Device*)
+    + onWidgetLostFocus(_device: Device*)
+    + decorate(_device: Device*)
+    + getView() : QWidget*
+
+    # {abstract} _do_on_widget_got_focus(Device* )
+    # {abstract} _do_on_widget_lost_focus(Device*)
+    # {abstract} _set_device_info(Device*)
+    # _reset()
+
+    + <<signal>> activated()
+    + <<signal>> deactivated()
+
+}

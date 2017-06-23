@@ -1,0 +1,47 @@
+abstract DeviceController {
+    - device_ : Device*
+    - obj_ : DeviceControllerObject*
+    - {static} all_controllers_ :  QList<DeviceController*>
+    + {static} getControllers(_device: Device*) : QList<DeviceController*>
+
+    + DeviceController(_device: Device*, _auto_read: bool)
+    + attach(_device: Device*, _auto_read: bool)
+    + getDevice() : Device*
+    + setState(_state: DeviceState) : bool
+    + hasOtherControllers() : bool
+    + {abstract} connectModification()
+    + {abstract} disconnectModification()
+    # {abstract} _do_write() : bool
+    # {abstract} _do_read() : bool
+    # {abstract} _device_attached(_device: Device*)
+    # _detach(_device: Device*)
+    # {abstract} _need_force_read() :  bool
+    # {abstract} _need_force_write() : bool
+    # _init();
+    - __clear();
+}
+
+class DeviceControllerObject {
+    - state_ : DeviceState
+    - controller_ : DeviceController*
+    - device_ : Device*
+
+    + DeviceControllerObject(_controller: DeviceController*, _device: Device*, _auto_read: bool)
+    + setState(_state: DeviceState) : bool
+    + init()
+    + <<signal>> stateChanged(_old : DeviceState, _new : DeviceState)
+    + <<signal>> wrote()
+
+    - connect_sibling(DeviceControllerObject* _sibling);
+    - <<slot>> on_other_state_changed(DeviceState _old, DeviceState _new);
+    - <<slot>> on_device_destroyed();
+    - <<slot>> on_need_actual_data();
+    - <<slot>> force_read();
+    - <<slot>> do_write();
+    - <<slot>> do_read();
+    - can_set_state(_state: DeviceState) : bool
+}
+
+
+DeviceControllerObject -up-|> QObject
+DeviceController "1" *- "1" DeviceControllerObject : obj_

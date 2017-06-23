@@ -1,0 +1,32 @@
+/**
+\mainpage Red Banner Studio 
+
+- \subpage devices
+- \subpage editors
+- \subpage search
+- \subpage mainmenu
+- \subpage settings
+- \subpage dockers
+- \subpage session
+- \subpage projects
+- \subpage debugger
+- \subpage help
+
+\if Developers
+
+<a href = "../../doc_for_users/html/index.html">
+    Версия для пользователей
+</a>
+
+\else
+
+<a href = "../../doc_for_developers/html/index.html">
+    Версия для разработчиков
+</a>
+
+\endif
+
+\author Мадумарова К.В.
+\version 2.0.33
+
+*/  
