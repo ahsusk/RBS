@@ -1,0 +1,23 @@
+class EncodingManager <<Singleton>> {
+    - encodings_ : QStringList
+    - default_encoding_ : QString
+    - recent_encodings_ : QMap<QString,QString>
+
+    + {override} wrap(_impl: ADeviceImplementor*) : Device*
+    + {override} getData() : QVariantMap
+    + {override} setData(_data: const QVariantMap&)
+    + <<signal>> encodingChanged(_encoding: const QString&)
+    + getDefaultEncoding() : QString
+    + setDefaultEncoding(_enc: const QString&)
+    + getEncodings() : QStringList
+    + showDialog(_current: const QString&) : QString
+    + saveEncoding(_path: const QString&, _encoding: const QString& )
+    + getEncodingForPath(_path: const QString&) : QString
+
+    - <<slot>> encoding_changed(_encoding : const QString&)
+
+}
+
+EncodingManager -up-|> JsonSettings
+EncodingManager -up-|> RegExpDeviceFactory
+
